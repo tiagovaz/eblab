@@ -14,14 +14,14 @@ def rfid_auth(request):
             # Main door access
             if resource == 'main_door':
                 if rfidtag_obj.main_door_access:
-                    return HttpResponse(status=200)
+                    return HttpResponse("Authorized", status=200)
                 else:
                     return HttpResponse(status=405)
 
             # Laser cutter access
             elif resource == 'laser_cutter':
                 if rfidtag_obj.laser_cutter_access:
-                    return HttpResponse(status=200)
+                    return HttpResponse("Authorized", status=200)
                 else:
                     return HttpResponse(status=405)
             else:
