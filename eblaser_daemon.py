@@ -8,12 +8,18 @@ from py532lib.constants import *
 import binascii
 import requests
 
+from gpiozero import OutputDevice
+
 pn532 = Pn532_i2c()
 pn532.SAMconfigure()
+
+
 
 #TODO: check if status is busy before checking the authentication
 class CardReader():
     def __init__(self):
+        self.relay_pinout = OutputDevice(16)
+        self.relay_pinout.on()
         self.card_data = None
         self.current_id = None
         self.timestamp = None
@@ -37,6 +43,7 @@ class CardReader():
     
                 if r.status_code == 405 and self.is_free is True:
                     self.text = "DENIED: " + card_data_str
+                    self.relay_pinout.on()
                     # Update json file and keep the auth_text for a few seconds
                     self.update_json()
                     time.sleep(3)
@@ -44,21 +51,29 @@ class CardReader():
     
                 elif r.status_code == 200:
                     if self.is_free is True:
-                        self.main_text = "AUTHORIZED: " + card_data_str
-                        self.text = card_data_str + " logged since " + self.timestamp
+                        self.text = "AUTHORIZED: " + card_data_str
+                        self.relay_pinout.off()
+                        self.update_json()
+                        time.sleep(3)
+                        self.text = card_data_str + " LOGGED IN"
                         self.is_free = False
                         self.current_id = card_data_str
                         
                     elif self.is_free is False:
                         if card_data_str == self.current_id:
-                            self.main_text = "RFID PLEASE"
-                            self.text = card_data_str + " logged out"
+                            self.text = card_data_str + " LOGGED OFF"
+                            self.relay_pinout.on()
+                            self.update_json()
+                            time.sleep(3)
+                            self.text = "RFID PLEASE"
                             self.is_free = True
                             self.current_id = None
                         else:
                             self.text = 'Use id ' + self.current_id + " to log out" 
+                            self.relay_pinout.on()
             except:
                 self.text = "ERROR! .-= better call greg =-."
+                self.relay_pinout.on()
 
             # Update json file
             self.update_json()

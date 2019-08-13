@@ -7,9 +7,11 @@ import time
 from datetime import datetime
 import json
 
-from gpiozero import Button
+from gpiozero import Button, OutputDevice, InputDevice
 
-laser_status = Button(21) #gpio 21
+laser_status = InputDevice(19)
+oe_pinout = OutputDevice(13)
+oe_pinout.on()
 
 class myClock(Label):
     def update(self, *args):
@@ -27,18 +29,18 @@ class CardReader(GridLayout):
         self.event = Clock.schedule_once(self.start, 5)
 
     def read_gpio(self, *args):
-        if laser_status.is_pressed is True:
+        if laser_status.is_active is False:
             self.laser_text.text = "Laser is on"
-        elif laser_status.is_pressed is False:
+        elif laser_status.is_active is True:
             self.laser_text.text = "Laser is off"
 
     def start(self, *args):
         self.main_text = Label()
-        self.main_text.font_size = "30px"
+        self.main_text.font_size = "50px"
         self.add_widget(self.main_text)
         
         self.laser_text = Label(text="Laser is off")
-        self.laser_text.font_size = "20px"
+        self.laser_text.font_size = "25px"
         self.add_widget(self.laser_text)
 
         self.gpio_event = Clock.schedule_interval(self.read_gpio, 0.1)
@@ -65,7 +67,7 @@ class ScreenApp(GridLayout):
         self.add_widget(reader)
 
         clock = myClock()
-        clock.font_size = '20px'
+        clock.font_size = '25px'
         Clock.schedule_interval(clock.update, 1)
         self.add_widget(clock)
 
