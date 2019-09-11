@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cuser',
     'eblab',
 ]
 
@@ -82,10 +81,6 @@ DATABASES = {
     }
 }
 
-# Use cuser for auth
-AUTH_USER_MODEL = 'cuser.CUser'
-
-
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
@@ -123,3 +118,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/html/eblab/eblab/static/'
+
+
