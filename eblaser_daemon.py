@@ -13,8 +13,6 @@ from gpiozero import OutputDevice
 pn532 = Pn532_i2c()
 pn532.SAMconfigure()
 
-
-
 #TODO: check if status is busy before checking the authentication
 class CardReader():
     def __init__(self):
@@ -36,25 +34,36 @@ class CardReader():
         if self.card_data != None:
             card_data_str = None
             card_data_str = str(binascii.hexlify(self.card_data)[14:].decode("utf-8"))
-            url = "http://eblab.acaia.ca/rfid/?uid=" + card_data_str + "&resource=" + resource
+            url_base = "http://eblab.acaia.ca/rfid/?uid=" + card_data_str + "&resource=" + resource
+            url = url_base + "&action=NON"
             try:
                 r = requests.get(url)
                 self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
+                if r.status_code == 406:
+                    self.text = "UNKNOWN ID: " + card_data_str
+                    self.relay_pinout.on()
+                    # Update json file and keep the auth_text for a few seconds
+                    self.update_json()
+                    time.sleep(1)
+                    self.text = "RFID PLEASE"
+
                 if r.status_code == 405 and self.is_free is True:
                     self.text = "DENIED: " + card_data_str
                     self.relay_pinout.on()
                     # Update json file and keep the auth_text for a few seconds
                     self.update_json()
-                    time.sleep(3)
+                    time.sleep(1)
                     self.text = "RFID PLEASE"
     
                 elif r.status_code == 200:
                     if self.is_free is True:
                         self.text = "AUTHORIZED: " + card_data_str
+                        url = url_base + "&action=LOI"
+                        r = requests.get(url)
                         self.relay_pinout.off()
                         self.update_json()
-                        time.sleep(3)
+                        time.sleep(1)
                         self.text = card_data_str + " LOGGED IN"
                         self.is_free = False
                         self.current_id = card_data_str
@@ -62,14 +71,19 @@ class CardReader():
                     elif self.is_free is False:
                         if card_data_str == self.current_id:
                             self.text = card_data_str + " LOGGED OFF"
+                            url = url_base + "&action=LOO"
+                            r = requests.get(url)
                             self.relay_pinout.on()
                             self.update_json()
-                            time.sleep(3)
+                            time.sleep(1)
                             self.text = "RFID PLEASE"
                             self.is_free = True
                             self.current_id = None
                         else:
                             self.text = 'Use id ' + self.current_id + " to log out" 
+                            self.update_json()
+                            time.sleep(1)
+                            self.text = card_data_str + " LOGGED IN"
                             self.relay_pinout.on()
             except:
                 self.text = "ERROR! .-= better call greg =-."
@@ -90,11 +104,11 @@ class CardReader():
                       }
         print(json_output)
 
-        with open('data.json', 'w') as outfile:
+        with open('/tmp/eblaser_data.json', 'w') as outfile:
                 json.dump(json_output, outfile)
 
 if __name__ == '__main__':
     reader = CardReader()
     while True:
         reader.read_card()
-        time.sleep(1)
+        time.sleep(0.1)
