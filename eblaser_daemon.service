@@ -1,0 +1,14 @@
+[Unit]
+Description=EBLAB Daemon
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/bin/python3 /home/pi/py532lib/eblaser_daemon.py
+
+[Install]
+WantedBy=multi-user.target
+
