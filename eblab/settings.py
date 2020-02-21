@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
+    'django_tables2',
+    'crispy_forms',
     'eblab',
 ]
 
@@ -105,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Montreal'
 
 USE_I18N = True
 
@@ -119,5 +122,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '/var/www/html/eblab/eblab/static/'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+DJANGO_TABLES2_TEMPLATE = 'django_tables2/bootstrap4.html'
+
 
 

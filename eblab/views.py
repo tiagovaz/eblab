@@ -1,6 +1,55 @@
 from django.http import HttpResponse
 from eblab.models import RFIDTag, Log, Person, Event
+from django.views.generic import TemplateView
+from .filters import LogFilter
+from django_tables2 import RequestConfig
+
+from django_tables2.export.views import ExportMixin
+from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Div
+import django_tables2
 import datetime
+
+class SearchView(TemplateView):
+    template_name = 'search.html'
+
+    def get_queryset(self, **kwargs):
+        return Log.objects.all()
+
+    def get_context_data(self, **kwargs):
+        q = self.request.GET
+        context = super(SearchView, self).get_context_data(**kwargs)
+        if q:
+            filter = LogFilter(q, queryset=self.get_queryset(**kwargs))
+        else:
+            # hack to return 0 objs in the index
+            filter = LogFilter(q, queryset=Log.objects.all()[:0])
+        filter.form.helper = LogFilterFormHelper()
+        table = LogTable(filter.qs)
+        RequestConfig(self.request, paginate={'per_page': 50}).configure(table)
+        context['filter'] = filter
+        context['table'] = table
+        return context
+
+class LogTable(ExportMixin, django_tables2.Table):
+    class Meta:
+        model = Log
+        fields = ('id', 'person', 'rfid', 'event', 'date')
+
+
+class LogFilterFormHelper(FormHelper):
+    form_method = 'GET'
+    #form_show_labels = False
+    layout = Layout(
+        Row(
+            Div('person', css_class='col-sm-4'),
+            Div('rfid', css_class='col-sm-4'),
+            Div('event', css_class='col-sm-4'),
+          ),
+        Submit('submit', 'Apply Filter'),
+    )
+
 
 def rfid_auth(request):
     if request.method == 'GET':
@@ -11,7 +60,7 @@ def rfid_auth(request):
         # If the RFID tag is in the database
         if RFIDTag.objects.filter(uid=uid).exists():
             rfidtag_obj = RFIDTag.objects.get(uid=uid)
-            event_obj = Event.objects.get(event=action)
+            event_obj = Log.objects.get(event=action)
 
             # Laser cutter access
             if resource == 'laser_cutter':
@@ -33,8 +82,6 @@ def rfid_auth(request):
         # Tag invalid / not found
         else:
             return HttpResponse(status=406)
-
-        
 
 def index(request):
     return HttpResponse('index')

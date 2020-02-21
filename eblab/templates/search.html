@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load django_tables2 crispy_forms_tags %}
+
+{% block content %}
+  {% if user.is_authenticated %}
+      {% crispy filter.form filter.form.helper %}
+      <br>
+      {% if table.rows|length > 0 %}
+      <div class="alert alert-light" role="alert">
+      {{ table.rows|length }} records found
+          {% if export != None %}
+            | <a href="/static/export/{{ export }}">Met IDs (Met only, for the processing tool)</a>
+          {% endif %}
+          {% if export_scraping != None %}
+            | <a href="/static/export/{{ export_scraping }}">Object IDs (for the scraping tool)</a>
+          {% endif %}
+          {% if export_source_image != None %}
+            | <a href="/static/export/{{ export_source_image }}">Filenames (not for Met)</a>
+          {% endif %}
+          {% if export_source_image != None %}
+            | <a href="/static/export/{{ export_source_id }}">Source IDs (not for Met)</a>
+          {% endif %}
+      </div>
+      {% endif %}
+      {% render_table table %}
+  {% else %}
+    <a href="/admin/login?next=/">login</a>
+  {% endif %}
+{% endblock %}

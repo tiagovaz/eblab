@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_save
+from eblab import signals
 
 class RFIDTag(models.Model):
     uid = models.CharField(max_length=8, unique=True)
@@ -44,7 +46,14 @@ class Log(models.Model):
     rfid = models.ForeignKey('RFIDTag', on_delete=models.CASCADE)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     date = models.DateTimeField()
+    usage_time = models.TimeField()
     
     def __str__(self):
         return "%s RFID %s %s at %s" % (self.person, self.rfid, self.event, self.date)
+
+models.signals.post_save.connect(
+    signals.calculate_usage,
+    sender=Log
+)
+
 
