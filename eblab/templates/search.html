@@ -5,24 +5,25 @@
   {% if user.is_authenticated %}
       {% crispy filter.form filter.form.helper %}
       <br>
-      {% if table.rows|length > 0 %}
-      <div class="alert alert-light" role="alert">
-      {{ table.rows|length }} records found
-          {% if export != None %}
-            | <a href="/static/export/{{ export }}">Met IDs (Met only, for the processing tool)</a>
-          {% endif %}
-          {% if export_scraping != None %}
-            | <a href="/static/export/{{ export_scraping }}">Object IDs (for the scraping tool)</a>
-          {% endif %}
-          {% if export_source_image != None %}
-            | <a href="/static/export/{{ export_source_image }}">Filenames (not for Met)</a>
-          {% endif %}
-          {% if export_source_image != None %}
-            | <a href="/static/export/{{ export_source_id }}">Source IDs (not for Met)</a>
-          {% endif %}
-      </div>
-      {% endif %}
+
+
+  <!-- Nav tabs -->
+  <ul class="nav nav-pills justify-content-center" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#daily">Daily</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#detailed">Detailed</a>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div id="daily" class="container tab-pane active"><br>
+      {% render_table table_daily %}
+    </div>
+    <div id="detailed" class="container tab-pane fade"><br>
       {% render_table table %}
+  </div>
   {% else %}
     <a href="/admin/login?next=/">login</a>
   {% endif %}

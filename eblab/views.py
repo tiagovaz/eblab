@@ -27,16 +27,34 @@ class SearchView(TemplateView):
             filter = LogFilter(q, queryset=Log.objects.all()[:0])
         filter.form.helper = LogFilterFormHelper()
         table = LogTable(filter.qs)
+        table_daily = LogTableDaily(filter.qs)
         RequestConfig(self.request, paginate={'per_page': 50}).configure(table)
         context['filter'] = filter
         context['table'] = table
+        context['table_daily'] = table_daily
         return context
 
 class LogTable(ExportMixin, django_tables2.Table):
+    def render_logged_time(self, value, record):
+        return str(value)
+
+    def render_laser_usage_time(self, value, record):
+        return str(value)
+
     class Meta:
         model = Log
-        fields = ('id', 'person', 'rfid', 'event', 'date')
+        fields = ('id', 'person', 'rfid', 'event', 'date', 'logged_time', 'laser_usage_time')
 
+class LogTableDaily(ExportMixin, django_tables2.Table):
+    def render_logged_time(self, value, record):
+        return str(value)
+
+    def render_laser_usage_time(self, value, record):
+        return str(value)
+
+    class Meta:
+        model = Log
+        fields = ('logged_time', 'laser_usage_time')
 
 class LogFilterFormHelper(FormHelper):
     form_method = 'GET'
