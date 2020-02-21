@@ -19,6 +19,13 @@ class Person(models.Model):
     def __str__(self):
         return "%s %s" % (self.first_name, self.last_name)
 
+class LogDaily(models.Model):
+    person = models.ForeignKey('Person', on_delete=models.CASCADE)
+    rfid = models.ForeignKey('RFIDTag', on_delete=models.CASCADE)
+    date = models.DateField()
+    usage_time = models.DurationField(null=True, blank=True)
+    laser_usage_time = models.DurationField(null=True, blank=True)
+
 class Event(models.Model):
     LASER_START = 'LAS'
     LASER_END = 'LAE'
@@ -46,8 +53,8 @@ class Log(models.Model):
     rfid = models.ForeignKey('RFIDTag', on_delete=models.CASCADE)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     date = models.DateTimeField()
-    logged_time = models.TimeField(blank=True, null=True)
-    laser_usage_time = models.TimeField(blank=True, null=True)
+    logged_time = models.DurationField(blank=True, null=True)
+    laser_usage_time = models.DurationField(blank=True, null=True)
     
     def __str__(self):
         return "%s RFID %s %s at %s" % (self.person, self.rfid, self.event, self.date)

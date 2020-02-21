@@ -1,15 +1,35 @@
 from django.http import HttpResponse
-from eblab.models import RFIDTag, Log, Person, Event
+from eblab.models import RFIDTag, Log, Person, Event, LogDaily
 from django.views.generic import TemplateView
-from .filters import LogFilter
+from .filters import LogFilter, LogFilterDaily
 from django_tables2 import RequestConfig
-
 from django_tables2.export.views import ExportMixin
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Div
 import django_tables2
 import datetime
+
+class SearchViewDaily(TemplateView):
+    template_name = 'search_daily.html'
+
+    def get_queryset(self, **kwargs):
+        return LogDaily.objects.all()
+
+    def get_context_data(self, **kwargs):
+        q = self.request.GET
+        context = super(SearchViewDaily, self).get_context_data(**kwargs)
+        if q:
+            filter = LogFilterDaily(q, queryset=self.get_queryset(**kwargs))
+        else:
+            # hack to return 0 objs in the index
+            filter = LogFilterDaily(q, queryset=LogDaily.objects.all()[:0])
+        filter.form.helper = LogDailyFilterFormHelper()
+        table = LogTableDaily(filter.qs)
+        RequestConfig(self.request, paginate={'per_page': 50}).configure(table)
+        context['filter'] = filter
+        context['table'] = table
+        return context
 
 class SearchView(TemplateView):
     template_name = 'search.html'
@@ -27,34 +47,20 @@ class SearchView(TemplateView):
             filter = LogFilter(q, queryset=Log.objects.all()[:0])
         filter.form.helper = LogFilterFormHelper()
         table = LogTable(filter.qs)
-        table_daily = LogTableDaily(filter.qs)
         RequestConfig(self.request, paginate={'per_page': 50}).configure(table)
         context['filter'] = filter
         context['table'] = table
-        context['table_daily'] = table_daily
         return context
 
 class LogTable(ExportMixin, django_tables2.Table):
-    def render_logged_time(self, value, record):
-        return str(value)
-
-    def render_laser_usage_time(self, value, record):
-        return str(value)
-
     class Meta:
         model = Log
-        fields = ('id', 'person', 'rfid', 'event', 'date', 'logged_time', 'laser_usage_time')
+        fields = ('person', 'rfid', 'event', 'date', 'logged_time', 'laser_usage_time')
 
 class LogTableDaily(ExportMixin, django_tables2.Table):
-    def render_logged_time(self, value, record):
-        return str(value)
-
-    def render_laser_usage_time(self, value, record):
-        return str(value)
-
     class Meta:
-        model = Log
-        fields = ('logged_time', 'laser_usage_time')
+        model = LogDaily
+        fields = ('person', 'rfid', 'date', 'usage_time', 'laser_usage_time')
 
 class LogFilterFormHelper(FormHelper):
     form_method = 'GET'
@@ -68,6 +74,16 @@ class LogFilterFormHelper(FormHelper):
         Submit('submit', 'Apply Filter'),
     )
 
+class LogDailyFilterFormHelper(FormHelper):
+    form_method = 'GET'
+    #form_show_labels = False
+    layout = Layout(
+        Row(
+            Div('person', css_class='col-sm-4'),
+            Div('rfid', css_class='col-sm-4'),
+          ),
+        Submit('submit', 'Apply Filter'),
+    )
 
 def rfid_auth(request):
     if request.method == 'GET':
@@ -100,6 +116,3 @@ def rfid_auth(request):
         # Tag invalid / not found
         else:
             return HttpResponse(status=406)
-
-def index(request):
-    return HttpResponse('index')

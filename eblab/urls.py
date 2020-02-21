@@ -21,6 +21,7 @@ from eblab import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.SearchView.as_view()),
+    path('detailed/', views.SearchView.as_view()),
+    path('', views.SearchViewDaily.as_view()),
     path('rfid/', views.rfid_auth, name='rfid_auth'),
 ]
