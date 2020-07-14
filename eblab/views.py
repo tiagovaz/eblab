@@ -20,7 +20,11 @@ class SearchViewDaily(TemplateView):
         q = self.request.GET
         context = super(SearchViewDaily, self).get_context_data(**kwargs)
         if q:
-            filter = LogFilterDaily(q, queryset=self.get_queryset(**kwargs))
+            if self.request.user.is_superuser:
+                filter = LogFilterDaily(q, queryset=self.get_queryset(**kwargs))
+            else:
+                #TODO: filter in order to not see other users history
+                filter = LogFilterDaily(q, queryset=self.get_queryset(**kwargs))
         else:
             # hack to return 0 objs in the index
             filter = LogFilterDaily(q, queryset=LogDaily.objects.all()[:0])
@@ -94,7 +98,7 @@ def rfid_auth(request):
         # If the RFID tag is in the database
         if RFIDTag.objects.filter(uid=uid).exists():
             rfidtag_obj = RFIDTag.objects.get(uid=uid)
-            event_obj = Log.objects.get(event=action)
+            event_obj = Event.objects.get(event=action)
 
             # Laser cutter access
             if resource == 'laser_cutter':

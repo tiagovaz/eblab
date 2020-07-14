@@ -18,7 +18,6 @@ from django.urls import path
 from django.views.generic import TemplateView
 from eblab import views
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('detailed/', views.SearchView.as_view()),

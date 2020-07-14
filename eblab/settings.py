@@ -108,13 +108,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'America/Montreal'
+#TIME_ZONE = 'America/Montreal'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -128,3 +128,6 @@ DJANGO_TABLES2_TEMPLATE = 'django_tables2/bootstrap4.html'
 
 
 
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
