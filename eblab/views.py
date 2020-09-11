@@ -94,6 +94,7 @@ def rfid_auth(request):
         uid = request.GET.get('uid', '')
         resource = request.GET.get('resource', '')
         action = request.GET.get('action', '')
+        usage_time = int(request.GET.get('usage_time', 0))
 
         # If the RFID tag is in the database
         if RFIDTag.objects.filter(uid=uid).exists():
@@ -113,7 +114,12 @@ def rfid_auth(request):
                     log_obj.date = datetime.datetime.now()
                     log_obj.rfid = rfidtag_obj
                     log_obj.person = rfidtag_obj.person.all()[0]
-                    log_obj.save()
+                    if action == 'LAE':
+                        last_log = Log.objects.filter(event__event='LAS').latest('date')
+                        if log_obj.person == last_log.person:
+                            log_obj.laser_usage_time = datetime.timedelta(seconds=usage_time)
+                    log_obj.save() 
+                        
                     return HttpResponse("Logged", status=200)
             else: # unknown resource
                 return HttpResponse(status=406)
