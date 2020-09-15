@@ -118,6 +118,14 @@ def rfid_auth(request):
                         last_log = Log.objects.filter(event__event='LAS').latest('date')
                         if log_obj.person == last_log.person:
                             log_obj.laser_usage_time = datetime.timedelta(seconds=usage_time)
+                            # Log daily recording:
+                            log_daily, created = LogDaily.objects.get_or_create(person=log_obj.person, rfid=log_obj.rfid, date=log_obj.date)
+                            if log_daily.laser_usage_time:
+                                log_daily.laser_usage_time = log_daily.laser_usage_time + log_obj.laser_usage_time
+                            else:
+                                log_daily.laser_usage_time = log_obj.laser_usage_time
+                            log_daily.save()
+
                     log_obj.save() 
                         
                     return HttpResponse("Logged", status=200)

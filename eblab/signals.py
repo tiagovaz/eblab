@@ -24,9 +24,3 @@ def calculate_usage(sender, instance, **kwargs):
             else:
                 log_daily.usage_time = usage
             log_daily.save()
-    elif instance.event.event == 'LAE':
-        if log_daily.laser_usage_time:
-            log_daily.laser_usage_time = log_daily.laser_usage_time + instance.laser_usage_time
-        else:
-            log_daily.laser_usage_time = laser_usage
-        log_daily.save()

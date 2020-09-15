@@ -63,5 +63,3 @@ models.signals.post_save.connect(
     signals.calculate_usage,
     sender=Log
 )
-
-
