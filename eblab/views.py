@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import HttpResponse
-from .serializers import PersonSerializer
+from .serializers import *
 
 class SearchViewDaily(TemplateView):
     template_name = 'search_daily.html'
@@ -114,6 +114,17 @@ def person_by_rfid(request, rfid_tag):
         serializer = PersonSerializer(person)
         return Response(serializer.data)
 
+@api_view(['GET'])
+def daily_usage_by_rfid(request, rfid_tag):
+    try:
+        usage = LogDaily.objects.get(rfid__uid=rfid_tag, date=datetime.datetime.now())
+    except LogDaily.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == 'GET':
+        serializer = LogDailySerializer(usage)
+        return Response(serializer.data)
+
 def rfid_auth(request):
     if request.method == 'GET':
         uid = request.GET.get('uid', '')
@@ -141,7 +152,10 @@ def rfid_auth(request):
                     log_obj.person = rfidtag_obj.person.all()[0]
                     # send email on each logout:
                     if action == 'LOO':
-                        log_daily = LogDaily.objects.get(person=log_obj.person, rfid=log_obj.rfid, date=log_obj.date)
+                        try:
+                            log_daily = LogDaily.objects.get(person=log_obj.person, rfid=log_obj.rfid, date=log_obj.date)
+                        except LogDaily.DoesNotExist:
+                                log_daily = None
                         if log_daily != None:
                             if log_daily.laser_usage_time:
                                 send_mail(

@@ -23,6 +23,7 @@ urlpatterns = [
     path('detailed/', views.SearchView.as_view()),
     path('people', views.people_collection, name='people'),
     re_path(r'^person/(?P<rfid_tag>\w+)$', views.person_by_rfid, name='person'),
+    re_path(r'^daily_usage/(?P<rfid_tag>\w+)$', views.daily_usage_by_rfid, name='daily_usage'),
     path('', views.SearchViewDaily.as_view()),
     path('rfid/', views.rfid_auth, name='rfid_auth'),
 ]
