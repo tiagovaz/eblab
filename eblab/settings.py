@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'crispy_forms',
     'eblab',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [

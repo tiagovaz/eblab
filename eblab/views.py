@@ -9,12 +9,19 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Div
 import django_tables2
 import datetime
+from django.core.mail import send_mail
+
+# DRF stuff
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.http import HttpResponse
+from .serializers import PersonSerializer
 
 class SearchViewDaily(TemplateView):
     template_name = 'search_daily.html'
 
     def get_queryset(self, **kwargs):
-        return LogDaily.objects.all()
+        return LogDaily.objects.all().order_by('-id')
 
     def get_context_data(self, **kwargs):
         q = self.request.GET
@@ -89,6 +96,24 @@ class LogDailyFilterFormHelper(FormHelper):
         Submit('submit', 'Apply Filter'),
     )
 
+@api_view(['GET'])
+def people_collection(request):
+    if request.method == 'GET':
+        people = Person.objects.all()
+        serializer = PersonSerializer(people, many=True)
+        return Response(serializer.data)
+
+@api_view(['GET'])
+def person_by_rfid(request, rfid_tag):
+    try:
+        person = Person.objects.get(rfid_tag__uid=rfid_tag)
+    except Person.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == 'GET':
+        serializer = PersonSerializer(person)
+        return Response(serializer.data)
+
 def rfid_auth(request):
     if request.method == 'GET':
         uid = request.GET.get('uid', '')
@@ -114,6 +139,18 @@ def rfid_auth(request):
                     log_obj.date = datetime.datetime.now()
                     log_obj.rfid = rfidtag_obj
                     log_obj.person = rfidtag_obj.person.all()[0]
+                    # send email on each logout:
+                    if action == 'LOO':
+                        log_daily = LogDaily.objects.get(person=log_obj.person, rfid=log_obj.rfid, date=log_obj.date)
+                        if log_daily != None:
+                            if log_daily.laser_usage_time:
+                                send_mail(
+                                    'LASER USAGE',
+                                    str(log_daily.laser_usage_time),
+                                    'eblab@acaia.ca',
+                                    ['tvaz@riseup.net'],
+                                    fail_silently=True,
+                                )
                     if action == 'LAE':
                         last_log = Log.objects.filter(event__event='LAS').latest('date')
                         if log_obj.person == last_log.person:

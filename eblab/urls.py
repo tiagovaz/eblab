@@ -14,13 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import TemplateView
 from eblab import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('detailed/', views.SearchView.as_view()),
+    path('people', views.people_collection, name='people'),
+    re_path(r'^person/(?P<rfid_tag>\w+)$', views.person_by_rfid, name='person'),
     path('', views.SearchViewDaily.as_view()),
     path('rfid/', views.rfid_auth, name='rfid_auth'),
 ]
