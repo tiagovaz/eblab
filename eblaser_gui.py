@@ -8,7 +8,6 @@ from datetime import datetime
 from datetime import timedelta
 import json
 import requests
-
 from gpiozero import Button, OutputDevice, InputDevice
 
 # Input from laser when it's in function
@@ -28,6 +27,9 @@ class CardReader(GridLayout):
     def __init__(self, **kwargs):
         super(CardReader, self).__init__(**kwargs)
         self.rfid = None
+        self.person = None
+        self.fortune = ""
+        self.laser_time_daily = "00:00:00"
         self.laser_time_start = 0
         self.laser_time_end = 0
         self.laser_time_total = 0
@@ -57,11 +59,12 @@ class CardReader(GridLayout):
                     if self.laser_flag_do_not_log == False: # do not log the first loop interaction
                         ### laser time counter ###
                         self.laser_time_end = time.time()
-                        self.laser_time_total = self.laser_time_total + (self.laser_time_end - self.laser_time_start)
+                        delta_time = (self.laser_time_end - self.laser_time_start)
+                        self.laser_time_total = self.laser_time_total + round(delta_time)
                         self.laser_time_start = 0
                         self.laser_time_end = 0
                         ##########################
-                        url = "http://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAE" + "&usage_time=" + str(round(self.laser_time_total))
+                        url = "http://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAE" + "&usage_time=" + str(round(delta_time))
                         r = requests.get(url)
                         self.laser_text.text = "Laser is OFF"
                     self.laser_flag_do_not_log = False
@@ -71,12 +74,16 @@ class CardReader(GridLayout):
         self.main_text.font_size = "50px"
         self.add_widget(self.main_text)
 
-        self.laser_time_text = Label()
-        self.laser_time_text.font_size = "40px"
-        self.add_widget(self.laser_time_text)
+        self.fortune_text = Label(markup=True)
+        self.fortune_text.font_size = "20px"
+        self.add_widget(self.fortune_text)
 
+        self.laser_time_daily_text = Label()
+        self.laser_time_daily_text.font_size = "30px"
+        self.add_widget(self.laser_time_daily_text)
+        
         self.laser_text = Label(text="Laser is OFF")
-        self.laser_text.font_size = "25px"
+        self.laser_text.font_size = "20px"
         self.add_widget(self.laser_text)
 
         self.gpio_event = Clock.schedule_interval(self.read_gpio, 0.05)
@@ -90,10 +97,21 @@ class CardReader(GridLayout):
         self.load_json()
         self.main_text.text = self.data['text']
         self.rfid = self.data['current_id']
+        self.fortune = self.data['fortune']
+        self.person = self.data['person']
+        self.laser_time_daily = self.data['laser_time_daily']
         # reset total laser time each time we have a logoff
         if self.data['is_free'] == True:
             self.laser_time_total = 0
-        self.laser_time_text.text = "Session usage: " + str(timedelta(seconds=round(self.laser_time_total)))
+            self.fortune = ""
+            self.laser_time_daily = "00:00:00"
+        #self.laser_time_text.text = "Session usage: " + str(timedelta(seconds=round(self.laser_time_total)))
+        #total_usage = timedelta(seconds=round(self.laser_time_daily)) + timedelta(seconds=round(self.laser_time_total))
+        t = datetime.strptime(self.laser_time_daily,"%H:%M:%S")
+        t_delta = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+        total = timedelta(seconds=round(self.laser_time_total)) + t_delta
+        self.laser_time_daily_text.text = "Total for today: " + str(total)
+        self.fortune_text.text = self.fortune
 
 class ScreenApp(GridLayout):
     def __init__(self, **kwargs):
@@ -104,7 +122,7 @@ class ScreenApp(GridLayout):
         self.add_widget(self.l)
 
         reader = CardReader()
-        reader.font_size = '30px'
+        reader.font_size = '25px'
         self.add_widget(reader)
 
         clock = myClock()
@@ -122,4 +140,3 @@ if __name__ == '__main__':
     Config.set('graphics', 'window_state', 'maximized')
     Config.write()
     MyApp().run()
-

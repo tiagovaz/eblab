@@ -7,6 +7,7 @@ from py532lib.frame import *
 from py532lib.constants import *
 import binascii
 import requests
+from subprocess import Popen, PIPE
 
 from gpiozero import OutputDevice
 
@@ -20,6 +21,9 @@ class CardReader():
         self.relay_pinout.on()
         self.card_data = None
         self.current_id = None
+        self.person = None
+        self.fortune = ""
+        self.laser_time_daily = "00:00:00"
         self.timestamp = None
         self.is_free = True
         self.text = 'RFID PLEASE'
@@ -61,18 +65,23 @@ class CardReader():
                         self.text = "AUTHORIZED: " + card_data_str
                         url = url_base + "&action=LOI"
                         r = requests.get(url)
+                        self.set_person_by_rfid(card_data_str)
+                        self.set_laser_time_daily_by_rfid(card_data_str)
                         self.relay_pinout.off()
                         self.update_json()
                         time.sleep(1)
-                        self.text = card_data_str + " LOGGED IN"
+                        self.text = "Hi " + self.person + "!"
+                        f = self.get_fortune()
+                        self.fortune = str(f).strip()
                         self.is_free = False
                         self.current_id = card_data_str
                         
                     elif self.is_free is False:
                         if card_data_str == self.current_id:
-                            self.text = card_data_str + " LOGGED OFF"
+                            self.text = "bye, " + self.person
                             url = url_base + "&action=LOO"
                             r = requests.get(url)
+                            self.set_person_by_rfid(None)
                             self.relay_pinout.on()
                             self.update_json()
                             time.sleep(1)
@@ -96,9 +105,34 @@ class CardReader():
             r.status_code = None
             self.card_data = None
 
+    def get_fortune(self):
+        pipe = Popen("/usr/games/fortune -n 30 -s", shell=True, stdout=PIPE).stdout
+        return pipe.read().decode('UTF-8')
+
+    def set_person_by_rfid(self, rfid):
+        if rfid == None:
+            self.person = None
+        else:
+            url = "http://eblab.acaia.ca/person/" + rfid
+            response = requests.get(url)
+            jsonResponse = response.json()
+            self.person = jsonResponse["first_name"]
+
+    def set_laser_time_daily_by_rfid(self, rfid):
+        if rfid == None:
+            self.daily_usage = "00:00:00"
+        else:
+            url = "http://eblab.acaia.ca/daily_usage/" + rfid
+            response = requests.get(url)
+            jsonResponse = response.json()
+            self.laser_time_daily = jsonResponse["laser_usage_time"]
+
     def update_json(self):
         json_output = {'current_id': self.current_id,
+                       'person': self.person,
                        'is_free': self.is_free,
+                       'fortune': self.fortune,
+                       'laser_time_daily': self.laser_time_daily,
                        'timestamp': self.timestamp,
                        'text': self.text
                       }
