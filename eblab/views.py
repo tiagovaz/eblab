@@ -119,7 +119,7 @@ def daily_usage_by_rfid(request, rfid_tag):
     try:
         usage = LogDaily.objects.get(rfid__uid=rfid_tag, date=datetime.datetime.now())
     except LogDaily.DoesNotExist:
-        return HttpResponse(status=404)
+        return Response({'laser_usage_time': '00:00:00'})
 
     if request.method == 'GET':
         serializer = LogDailySerializer(usage)
