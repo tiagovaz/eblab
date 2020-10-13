@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django_tables2',
     'crispy_forms',
     'eblab',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
