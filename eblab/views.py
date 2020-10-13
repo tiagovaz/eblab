@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 from rest_framework.response import Response
 from rest_framework.decorators import authentication_classes, permission_classes, api_view
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
 from django.http import HttpResponse
 from .serializers import *
 
@@ -99,7 +99,7 @@ class LogDailyFilterFormHelper(FormHelper):
     )
 
 @api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
+@authentication_classes((TokenAuthentication,)) 
 @permission_classes((IsAuthenticated,))
 def people_collection(request):
     if request.method == 'GET':
@@ -108,7 +108,7 @@ def people_collection(request):
         return Response(serializer.data)
 
 @api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
+@authentication_classes((TokenAuthentication,)) 
 @permission_classes((IsAuthenticated,))
 def person_by_rfid(request, rfid_tag):
     try:
@@ -121,7 +121,7 @@ def person_by_rfid(request, rfid_tag):
         return Response(serializer.data)
 
 @api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
+@authentication_classes((TokenAuthentication,)) 
 @permission_classes((IsAuthenticated,))
 def daily_usage_by_rfid(request, rfid_tag):
     try:
@@ -134,7 +134,7 @@ def daily_usage_by_rfid(request, rfid_tag):
         return Response(serializer.data)
 
 @api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
+@authentication_classes((TokenAuthentication,)) 
 @permission_classes((IsAuthenticated,))
 def rfid_auth(request):
     if request.method == 'GET':
