@@ -29,6 +29,7 @@ class CardReader():
         self.text = 'RFID PLEASE'
         self.output_json = {}
         self.update_json()
+        self.headers = {'Authorization': 'Token XXX'}
 
     def read_card(self):
         self.card_data = pn532.read_mifare().get_data()
@@ -38,10 +39,10 @@ class CardReader():
         if self.card_data != None:
             card_data_str = None
             card_data_str = str(binascii.hexlify(self.card_data)[14:].decode("utf-8"))
-            url_base = "http://eblab.acaia.ca/rfid/?uid=" + card_data_str + "&resource=" + resource
+            url_base = "https://eblab.acaia.ca/rfid/?uid=" + card_data_str + "&resource=" + resource
             url = url_base + "&action=NON"
             try:
-                r = requests.get(url)
+                r = requests.get(url, headers=self.headers)
                 self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
                 if r.status_code == 406:
@@ -64,7 +65,7 @@ class CardReader():
                     if self.is_free is True:
                         self.text = "AUTHORIZED: " + card_data_str
                         url = url_base + "&action=LOI"
-                        r = requests.get(url)
+                        r = requests.get(url, headers=self.headers)
                         self.set_person_by_rfid(card_data_str)
                         self.set_laser_time_daily_by_rfid(card_data_str)
                         self.relay_pinout.off()
@@ -80,7 +81,7 @@ class CardReader():
                         if card_data_str == self.current_id:
                             self.text = "bye, " + self.person
                             url = url_base + "&action=LOO"
-                            r = requests.get(url)
+                            r = requests.get(url, headers=self.headers)
                             self.set_person_by_rfid(None)
                             self.relay_pinout.on()
                             self.update_json()
@@ -113,8 +114,8 @@ class CardReader():
         if rfid == None:
             self.person = None
         else:
-            url = "http://eblab.acaia.ca/person/" + rfid
-            response = requests.get(url)
+            url = "https://eblab.acaia.ca/person/" + rfid
+            response = requests.get(url, headers=self.headers)
             jsonResponse = response.json()
             self.person = jsonResponse["first_name"]
 
@@ -122,10 +123,13 @@ class CardReader():
         if rfid == None:
             self.daily_usage = "00:00:00"
         else:
-            url = "http://eblab.acaia.ca/daily_usage/" + rfid
-            response = requests.get(url)
+            url = "https://eblab.acaia.ca/daily_usage/" + rfid
+            response = requests.get(url, headers=self.headers)
             jsonResponse = response.json()
-            self.laser_time_daily = jsonResponse["laser_usage_time"]
+            if jsonResponse["laser_usage_time"] == None:
+                self.laser_time_daily = "00:00:00"
+            else:
+                self.laser_time_daily = jsonResponse["laser_usage_time"]
 
     def update_json(self):
         json_output = {'current_id': self.current_id,

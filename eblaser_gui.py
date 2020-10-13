@@ -39,6 +39,7 @@ class CardReader(GridLayout):
         self.cols = 1
         self.status = 'free'
         self.event = Clock.schedule_once(self.start, 2)
+        self.headers = {'Authorization': 'Token XXX'}
 
     def read_gpio(self, *args):
         # FIXME: try/exception + method for url request
@@ -49,8 +50,8 @@ class CardReader(GridLayout):
                     self.laser_time_start = time.time()
                     self.laser_flag = True
                     self.laser_text.text = "Laser is ON"
-                    url = "http://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAS"
-                    r = requests.get(url)
+                    url = "https://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAS"
+                    r = requests.get(url, headers=self.headers)
             # If laser becomes OFF and lastest ON was minimum 8s before, then turn it OFF for real
             # otherwise it is just pulses from engraving activity
             elif laser_status.is_active is True and int(timedelta(seconds=(time.time() - self.laser_time_start)).total_seconds()) > 7:
@@ -64,8 +65,8 @@ class CardReader(GridLayout):
                         self.laser_time_start = 0
                         self.laser_time_end = 0
                         ##########################
-                        url = "http://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAE" + "&usage_time=" + str(round(delta_time))
-                        r = requests.get(url)
+                        url = "https://eblab.acaia.ca/rfid/?uid=" + self.rfid + "&resource=laser_cutter" + "&action=LAE" + "&usage_time=" + str(round(delta_time))
+                        r = requests.get(url, headers=self.headers)
                         self.laser_text.text = "Laser is OFF"
                     self.laser_flag_do_not_log = False
 
