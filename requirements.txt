@@ -1,2 +1,9 @@
-django==2.2.13
-django-username-email
+pytz==2019.3
+requests==2.22.0
+Django==3.1.2
+django_crispy_forms==1.9.2
+django_tables2==2.3.3
+djangorestframework==3.12.1
+gpiozero==1.5.1
+kivy==1.11.1
+py532lib==2018.6.14.dev1
