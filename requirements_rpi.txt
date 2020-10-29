@@ -1,0 +1,4 @@
+pytz==2019.3
+requests==2.22.0
+gpiozero==1.5.1
+kivy==1.11.1
