@@ -1,15 +1,30 @@
 import time
-from datetime import datetime
 import json
+import binascii
+import requests
 
 from py532lib.i2c import *
 from py532lib.frame import *
 from py532lib.constants import *
-import binascii
-import requests
+
 from subprocess import Popen, PIPE
+from datetime import datetime
 
 from gpiozero import OutputDevice
+
+
+####### Local resource config ########
+
+RELAY_PINOUT = 17
+LOCAL_RESOURCE = 'laser_cutter'
+SERVER_URL = 'https://eblab.acaia.ca/'
+SERVER_TOKEN = 'XXX'
+ERROR_MSG = 'ERROR! .-= better call greg =-.'
+FORTUNES = False
+
+######################################
+
+# NFC Device setup
 
 pn532 = Pn532_i2c()
 pn532.SAMconfigure()
@@ -17,7 +32,7 @@ pn532.SAMconfigure()
 #TODO: check if status is busy before checking the authentication
 class CardReader():
     def __init__(self):
-        self.relay_pinout = OutputDevice(17)
+        self.relay_pinout = OutputDevice(RELAY_PINOUT)
         self.relay_pinout.off()
         self.card_data = None
         self.current_id = None
@@ -29,17 +44,18 @@ class CardReader():
         self.text = 'RFID PLEASE'
         self.output_json = {}
         self.update_json()
-        self.headers = {'Authorization': 'Token YYY'}
+        token_str = 'Token ' + SERVER_TOKEN
+        self.headers = {'Authorization': token_str}
 
     def read_card(self):
         self.card_data = pn532.read_mifare().get_data()
         pn532.reset_i2c()
 
-        resource = 'laser_cutter'
+        resource = LOCAL_RESOURCE
         if self.card_data != None:
             card_data_str = None
             card_data_str = str(binascii.hexlify(self.card_data)[14:].decode("utf-8"))
-            url_base = "https://eblab.acaia.ca/rfid/?uid=" + card_data_str + "&resource=" + resource
+            url_base =  SERVER_URL + "/rfid/?uid=" + card_data_str + "&resource=" + resource
             url = url_base + "&action=NON"
             try:
                 r = requests.get(url, headers=self.headers)
@@ -73,8 +89,9 @@ class CardReader():
                         self.update_json()
                         time.sleep(1)
                         self.text = "Hi " + self.person + "!"
-                        f = self.get_fortune()
-                        self.fortune = str(f).strip()
+                        if FORTUNES is True:
+                            f = self.get_fortune()
+                            self.fortune = str(f).strip()
                         self.is_free = False
                         self.current_id = card_data_str
                         
@@ -91,13 +108,13 @@ class CardReader():
                             self.is_free = True
                             self.current_id = None
                         else:
-                            self.text = 'Use id ' + self.current_id + " to log out" 
+                            self.text = "Use id " + self.current_id + " to log out" 
                             self.update_json()
                             time.sleep(1)
                             self.text = card_data_str + " LOGGED IN"
                             #self.relay_pinout.off()
             except:
-                self.text = "ERROR! .-= better call greg =-."
+                self.text = ERROR_MSG
                 self.relay_pinout.off()
 
             # Update json file
@@ -115,7 +132,7 @@ class CardReader():
         if rfid == None:
             self.person = None
         else:
-            url = "https://eblab.acaia.ca/person/" + rfid
+            url = SERVER_URL + "/person/" + rfid
             response = requests.get(url, headers=self.headers)
             jsonResponse = response.json()
             self.person = jsonResponse["first_name"]
@@ -124,7 +141,7 @@ class CardReader():
         if rfid == None:
             self.daily_usage = "00:00:00"
         else:
-            url = "https://eblab.acaia.ca/daily_usage/" + rfid
+            url = SERVER_URL + "/daily_usage/" + rfid
             response = requests.get(url, headers=self.headers)
             jsonResponse = response.json()
             print(jsonResponse)
